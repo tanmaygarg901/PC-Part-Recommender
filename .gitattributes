@@ -1,0 +1,2 @@
+clustered_configs.csv filter=lfs diff=lfs merge=lfs -text
+configurations.csv filter=lfs diff=lfs merge=lfs -text
