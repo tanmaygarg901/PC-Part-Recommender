@@ -50,35 +50,51 @@
             const budget = document.getElementById('budget').value;
             const cpu_pref = Array.from(document.querySelectorAll('input[name="cpu_pref"]:checked')).map(el => el.value);
             const gpu_pref = Array.from(document.querySelectorAll('input[name="gpu_pref"]:checked')).map(el => el.value);
-            const response = await fetch('/recommend', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({budget: parseInt(budget), cpu_pref, gpu_pref}),
-            });
-            const data = await response.json();
+            
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-            if (data.error) {
-                resultsDiv.innerHTML = `<p>${data.error}</p>`;
-            } else {
-                data.forEach((rec, index) => {
-                    resultsDiv.innerHTML += `
-                        <div class="recommendation">
-                            <h4>Recommendation ${index + 1}</h4>
-                            <p>CPU: ${rec.cpu}</p>
-                            <p>GPU: ${rec.gpu}</p>
-                            <p>Motherboard: ${rec.motherboard}</p>
-                            <p>RAM: ${rec.ram}</p>
-                            <p>Storage: ${rec.storage}</p>
-                            <p>PSU: ${rec.psu}</p>
-                            <p>Case: ${rec.case}</p>
-                            <p>Total Cost: $${rec.total_cost.toFixed(2)}</p>
-                            <p>Performance Score: ${rec.performance_metric.toFixed(2)}</p>
-                        </div>
-                    `;
+            resultsDiv.innerHTML = 'Loading...';
+
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({budget: parseInt(budget), cpu_pref, gpu_pref}),
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                resultsDiv.innerHTML = '';
+                
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                } else if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p>No recommendations found.</p>';
+                } else {
+                    data.forEach((rec, index) => {
+                        resultsDiv.innerHTML += `
+                            <div class="recommendation">
+                                <h4>Recommendation ${index + 1}</h4>
+                                <p>CPU: ${rec.cpu}</p>
+                                <p>GPU: ${rec.gpu}</p>
+                                <p>Motherboard: ${rec.motherboard}</p>
+                                <p>RAM: ${rec.ram}</p>
+                                <p>Storage: ${rec.storage}</p>
+                                <p>PSU: ${rec.psu}</p>
+                                <p>Case: ${rec.case}</p>
+                                <p>Total Cost: $${rec.total_cost.toFixed(2)}</p>
+                                <p>Performance Score: ${rec.performance_metric.toFixed(2)}</p>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
             }
         });
     </script>
