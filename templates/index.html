@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Part Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>PC Part Recommender</h1>
+    <form id="recommendForm">
+        <label for="budget">Budget:</label>
+        <input type="number" id="budget" name="budget" required>
+        
+        <fieldset>
+            <legend>CPU Preference:</legend>
+            <div>
+                <input type="checkbox" id="cpu_intel" name="cpu_pref" value="Intel">
+                <label for="cpu_intel">Intel</label>
+            </div>
+            <div>
+                <input type="checkbox" id="cpu_amd" name="cpu_pref" value="AMD">
+                <label for="cpu_amd">AMD</label>
+            </div>
+        </fieldset>
+        
+        <fieldset>
+            <legend>GPU Preference:</legend>
+            <div>
+                <input type="checkbox" id="gpu_amd" name="gpu_pref" value="AMD">
+                <label for="gpu_amd">AMD</label>
+            </div>
+            <div>
+                <input type="checkbox" id="gpu_nvidia" name="gpu_pref" value="NVIDIA">
+                <label for="gpu_nvidia">NVIDIA</label>
+            </div>
+            <div>
+                <input type="checkbox" id="gpu_intel" name="gpu_pref" value="Intel">
+                <label for="gpu_intel">Intel</label>
+            </div>
+        </fieldset>
+        
+        <button type="submit">Get Recommendations</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('recommendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const budget = document.getElementById('budget').value;
+            const cpu_pref = Array.from(document.querySelectorAll('input[name="cpu_pref"]:checked')).map(el => el.value);
+            const gpu_pref = Array.from(document.querySelectorAll('input[name="gpu_pref"]:checked')).map(el => el.value);
+            const response = await fetch('/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({budget: parseInt(budget), cpu_pref, gpu_pref}),
+            });
+            const data = await response.json();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            if (data.error) {
+                resultsDiv.innerHTML = `<p>${data.error}</p>`;
+            } else {
+                data.forEach((rec, index) => {
+                    resultsDiv.innerHTML += `
+                        <div class="recommendation">
+                            <h4>Recommendation ${index + 1}</h4>
+                            <p>CPU: ${rec.cpu}</p>
+                            <p>GPU: ${rec.gpu}</p>
+                            <p>Motherboard: ${rec.motherboard}</p>
+                            <p>RAM: ${rec.ram}</p>
+                            <p>Storage: ${rec.storage}</p>
+                            <p>PSU: ${rec.psu}</p>
+                            <p>Case: ${rec.case}</p>
+                            <p>Total Cost: $${rec.total_cost.toFixed(2)}</p>
+                            <p>Performance Score: ${rec.performance_metric.toFixed(2)}</p>
+                        </div>
+                    `;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
